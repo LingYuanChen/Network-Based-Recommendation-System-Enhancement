@@ -19,7 +19,149 @@ import matplotlib.cm as cm
 import matplotlib.colors as colors
 import networkx as nx
 import itertools
-import sys
+import logging
+import yaml
+from tqdm import tqdm
+from pathlib import Path
+
+# Setup logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler('logs/data_processor.log'),
+        logging.StreamHandler()
+    ]
+)
+logger = logging.getLogger(__name__)
+
+class DataProcessor:
+    def __init__(self, category, config_path='config/config.yaml'):
+        self.category = category
+        self.config = self._load_config(config_path)
+        self.directory = f"amazon_{category}_review/"
+        self.setup_directories()
+        
+        # Initialize graphs
+        self.GItems = nx.Graph()
+        self.GUsers = nx.Graph()
+        self.GCombined = nx.Graph()
+        
+        # Initialize dictionaries
+        self.asinItems = {}
+        self.nodeItems = {}
+        self.nodeIdUsers = {}
+        self.reviewerIdUsers = {}
+        self.combinedDict1 = {}
+        self.combinedDict2 = {}
+        self.combinedNodeId = 0
+
+    def _load_config(self, config_path):
+        try:
+            with open(config_path, 'r') as f:
+                return yaml.safe_load(f)
+        except Exception as e:
+            logger.error(f"Error loading config file: {e}")
+            raise
+
+    def setup_directories(self):
+        """Create necessary directories if they don't exist."""
+        dirs = [
+            self.directory,
+            f"{self.directory}/data",
+            f"{self.directory}/pic",
+            "logs"
+        ]
+        for d in dirs:
+            Path(d).mkdir(parents=True, exist_ok=True)
+            logger.info(f"Created directory: {d}")
+
+    def validate_input_data(self, data_path):
+        """Validate input data format and requirements."""
+        required_fields = ['asin', 'reviewerID', 'overall', 'reviewTime']
+        try:
+            with gzip.open(data_path, 'rt') as f:
+                for line in f:
+                    review = json.loads(line)
+                    if not all(field in review for field in required_fields):
+                        raise ValueError(f"Missing required fields in review")
+        except Exception as e:
+            logger.error(f"Data validation error: {e}")
+            raise
+
+    def parseIterator(self, path):
+        """Generator for parsing gzipped JSON files."""
+        try:
+            with gzip.open(path, 'r') as g:
+                for l in g:
+                    yield eval(l)
+        except Exception as e:
+            logger.error(f"Error parsing file {path}: {e}")
+            raise
+
+    def parseItems(self, path):
+        """Parse items with improved memory efficiency and progress tracking."""
+        logger.info("Starting item parsing")
+        itemsNodeId = 0
+        edges = set()
+        
+        try:
+            items = list(self.parseIterator(path))
+            for item in tqdm(items, desc="Processing items"):
+                self.GItems.add_node(itemsNodeId)
+                self.GCombined.add_node(itemsNodeId)
+                self.asinItems[item['asin']] = itemsNodeId
+                self.nodeItems[itemsNodeId] = item['asin']
+                self.combinedDict1[itemsNodeId] = item['asin']
+                self.combinedDict2[item['asin']] = itemsNodeId
+                
+                if 'related' in item:
+                    bought_together = set(item['related'].get('bought_together', []))
+                    edges.update((item['asin'], item_dst_asin) for item_dst_asin in bought_together)
+                
+                itemsNodeId += 1
+                
+            logger.info(f"Processed {itemsNodeId} items")
+            self._add_edges_to_graphs(edges)
+            self.combinedNodeId = itemsNodeId
+            self._save_item_data()
+            
+        except Exception as e:
+            logger.error(f"Error in parseItems: {e}")
+            raise
+
+    def _add_edges_to_graphs(self, edges):
+        """Add edges to graphs with error handling."""
+        try:
+            updated_edges = [
+                (self.asinItems[edge[0]], self.asinItems[edge[1]])
+                for edge in edges
+                if edge[0] in self.asinItems and edge[1] in self.asinItems
+            ]
+            
+            self.GItems.add_edges_from(updated_edges)
+            self.GCombined.add_edges_from(updated_edges)
+            logger.info(f"Added {len(updated_edges)} edges to graphs")
+            
+        except Exception as e:
+            logger.error(f"Error adding edges to graphs: {e}")
+            raise
+
+    def _save_item_data(self):
+        """Save processed item data to files."""
+        try:
+            itemNodeIds = list(range(self.combinedNodeId))
+            with open(f"{self.directory}/ItemNodeIds", 'wb') as outfile:
+                pickle.dump(itemNodeIds, outfile)
+                
+            with open(f"{self.directory}/Dictionary_Items_{self.category}.txt", 'w') as f1:
+                json.dump(self.asinItems, f1)
+                
+            logger.info("Successfully saved item data")
+            
+        except Exception as e:
+            logger.error(f"Error saving item data: {e}")
+            raise
 
 GItems = nx.Graph()
 userEdges = Counter()

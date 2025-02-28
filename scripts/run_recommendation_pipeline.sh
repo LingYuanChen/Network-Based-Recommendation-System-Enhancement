@@ -6,6 +6,9 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
+# Load configuration
+CONFIG_FILE="config/config.yaml"
+
 # Default configuration
 CATEGORY="musical_instruments"
 RATING_THRESHOLD=4
@@ -91,10 +94,24 @@ run_python_script() {
     echo "----------------------------------------"
 }
 
+# Function to run parallel processes
+run_parallel_processes() {
+    echo -e "${YELLOW}Running parallel processes...${NC}"
+    
+    # Run network analysis in parallel
+    (run_python_script "network_centrality.py" "$CATEGORY") &
+    (run_python_script "community_detector.py" "$CATEGORY") &
+    
+    # Wait for all background processes to complete
+    wait
+    check_status "Parallel processing"
+}
+
 # Create necessary directories
 echo -e "${YELLOW}Setting up directories...${NC}"
 mkdir -p "../amazon_${CATEGORY}_review/data"
 mkdir -p "../amazon_${CATEGORY}_review/pic"
+mkdir -p "../logs"
 check_status "Directory setup"
 
 # Main pipeline
@@ -104,11 +121,15 @@ echo "Rating Threshold: $RATING_THRESHOLD"
 echo "Recommendations per user: $REC_NUM"
 echo "----------------------------------------"
 
-# Run the pipeline
+# Sequential data processing steps
 run_python_script "data_processor.py" "$RATING_THRESHOLD"
 run_python_script "time_window_analyzer.py" "$RATING_THRESHOLD"
-run_python_script "network_centrality.py" "$CATEGORY"
-run_python_script "community_detector.py" "$CATEGORY"
+
+# Parallel network analysis
+run_parallel_processes
+
+# Sequential recommendation steps
+run_python_script "link_predictor.py" "$CATEGORY"
 run_python_script "recommend.py" "$CATEGORY" "$REC_NUM"
 run_python_script "recommendation_analyzer.py" "$CATEGORY" "$YEAR" "$MONTHS" "$RATING_THRESHOLD" "$REC_NUM"
 

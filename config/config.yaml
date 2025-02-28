@@ -1,0 +1,32 @@
+default_settings:
+  batch_size: 1000000
+  min_reviews: 5
+  rating_threshold: 4
+  years:
+    training: [2011, 2012, 2013]
+    testing: 2014
+  months:
+    testing: [1, 2, 3]
+  
+graph_settings:
+  community_detection:
+    methods: ['louvain', 'infomap']
+    default_method: 'louvain'
+  
+  link_prediction:
+    methods: ['jaccard', 'shortest_path', 'adamic_adar']
+    weights:
+      jaccard: 0.4
+      shortest_path: 0.3
+      adamic_adar: 0.3
+
+paths:
+  data_dir: "data/"
+  output_dir: "output/"
+  log_dir: "logs/"
+  image_dir: "image/"
+
+logging:
+  level: "INFO"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  file: "pipeline.log" 
