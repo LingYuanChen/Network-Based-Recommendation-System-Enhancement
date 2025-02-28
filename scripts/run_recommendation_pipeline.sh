@@ -105,12 +105,12 @@ echo "Recommendations per user: $REC_NUM"
 echo "----------------------------------------"
 
 # Run the pipeline
-run_python_script "parseGraph.py" "$RATING_THRESHOLD"
-run_python_script "rollingWindow.py" "$RATING_THRESHOLD"
-run_python_script "centrality.py" "$CATEGORY"
-run_python_script "communityDetection.py" "$CATEGORY"
+run_python_script "data_processor.py" "$RATING_THRESHOLD"
+run_python_script "time_window_analyzer.py" "$RATING_THRESHOLD"
+run_python_script "network_centrality.py" "$CATEGORY"
+run_python_script "community_detector.py" "$CATEGORY"
 run_python_script "recommend.py" "$CATEGORY" "$REC_NUM"
-run_python_script "recommendAnalyze.py" "$CATEGORY" "$YEAR" "$MONTHS" "$RATING_THRESHOLD" "$REC_NUM"
+run_python_script "recommendation_analyzer.py" "$CATEGORY" "$YEAR" "$MONTHS" "$RATING_THRESHOLD" "$REC_NUM"
 
 echo -e "${GREEN}Pipeline completed successfully!${NC}"
 echo "Results can be found in amazon_${CATEGORY}_review/pic/"

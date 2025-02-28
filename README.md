@@ -84,9 +84,6 @@ amazon-recommendation-system/
 │   └── cleanup.sh
 ├── tests/                  # Test files
 │   └── test_basic.py
-├── docs/                   # Documentation
-├── examples/               # Example notebooks and scripts
-├── config/                 # Configuration files
 ├── data/                   # Data directory
 │   ├── meta_{category}.json.gz
 │   └── {category}_5.json.gz
@@ -235,6 +232,49 @@ To run the tests:
 ```bash
 python -m unittest discover tests
 ```
+
+## Citation
+
+If you use this project or the underlying Amazon review datasets, please cite the following papers:
+
+### 2023 Version
+```bibtex
+@article{hou2023bridging,
+  title={Bridging Language and Items for Retrieval and Recommendation},
+  author={Hou, Yupeng and Li, Jiacheng and He, Zhankui and Yan, An and Chen, Xiusi and McAuley, Julian},
+  journal={arXiv},
+  year={2023}
+}
+```
+
+### 2018 Version
+```bibtex
+@inproceedings{ni2019justifying,
+  title={Justifying recommendations using distantly-labeled reviews and fined-grained aspects},
+  author={Ni, Jianmo and Li, Jiacheng and McAuley, Julian},
+  booktitle={Proceedings of the 2019 Conference on Empirical Methods in Natural Language Processing},
+  year={2019}
+}
+```
+
+### 2014 Version
+```bibtex
+@inproceedings{he2016ups,
+  title={Ups and downs: Modeling the visual evolution of fashion trends with one-class collaborative filtering},
+  author={He, Ruining and McAuley, Julian},
+  booktitle={Proceedings of the 25th International Conference on World Wide Web},
+  year={2016}
+}
+
+@inproceedings{mcauley2015image,
+  title={Image-based recommendations on styles and substitutes},
+  author={McAuley, Julian and Targett, Christopher and Shi, Javen and van den Hengel, Anton},
+  booktitle={Proceedings of the 38th International ACM SIGIR Conference on Research and Development in Information Retrieval},
+  year={2015}
+}
+```
+
+For more information about the datasets, visit the [Amazon Review Data (2023)](https://cseweb.ucsd.edu/~jmcauley/datasets/amazon_v2/) page.
 
 ## Contributing
 
